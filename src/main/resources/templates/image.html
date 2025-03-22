@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>이미지 생성</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <script>
     async function generateImage() {
       const message = document.getElementById('message').value;
@@ -62,6 +63,47 @@
       const downloadUrl = `/download-file?url=${encodeURIComponent(imageUrl)}`;
       window.location.href = downloadUrl; // 브라우저에서 파일 다운로드 트리거
     }
+
+    // 음성 인식 시작
+    function startSpeechRecognition() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'ko-KR'; // 한국어 설정
+      recognition.continuous = false; // 한 번만 인식
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        console.log('음성 인식 시작');
+        document.getElementById('status').innerText = '음성 인식 중...';
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript; // 첫 번째 결과
+        console.log('음성 인식 결과: ', transcript);
+
+        // 텍스트 박스에 음성 인식 결과 입력
+        document.getElementById('message').value = transcript;
+        document.getElementById('status').innerText = '음성 인식 완료';
+
+        // 텍스트 길이가 10자 이상일 경우 generateImage() 호출
+        if (transcript.length >= 2) {
+          generateImage();
+        } else {
+          document.getElementById('status').innerText += ' - 텍스트 길이가 너무 짧습니다.';
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('오류 발생: ', event.error);
+        document.getElementById('status').innerText = '오류 발생: ' + event.error;
+      };
+
+      recognition.onend = () => {
+        console.log('음성 인식 종료');
+        document.getElementById('status').innerText = '음성 인식이 종료되었습니다.';
+      };
+
+      recognition.start();
+    }
   </script>
 </head>
 <body>
@@ -70,9 +112,16 @@
 
     <!-- 메시지 입력과 버튼을 한 줄로 배치 -->
     <div class="input-group mb-3">
-      <input type="text" class="form-control" id="message" placeholder="상세 미시지를 입력하세요.">
-      <button class="btn btn-primary" onclick="generateImage()">이미지 생성</button>
+      <!--<input type="text" class="form-control" id="message" placeholder="상세 미시지를 입력하세요.">
+      <button class="btn btn-primary" onclick="generateImage()">이미지 생성</button>-->
+      <input type="text" class="form-control" id="message" placeholder="음성 메시지가 표시됩니다.(최소 10자 이상) ">
+      <button class="btn btn-primary" onclick="startSpeechRecognition()">
+        <i class="fas fa-microphone" style="color: red;"></i>
+      </button>
     </div>
+
+    <!-- 음성 인식 상태 -->
+    <p id="status" class="text-muted"></p>
 
     <!-- 모델 선택과 이미지 개수 선택을 한 줄로 배치 -->
     <div class="row mb-3">
